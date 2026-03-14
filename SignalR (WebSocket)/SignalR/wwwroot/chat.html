@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SignalR Chat</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+<style>
+
+body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#e5ddd5;
+}
+
+.chat-container{
+    width:420px;
+    height:700px;
+    margin:auto;
+    background:white;
+    display:flex;
+    flex-direction:column;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 3px 10px rgba(0,0,0,0.2);
+}
+
+/* header */
+.chat-header{
+    background:#075E54;
+    color:white;
+    padding:15px;
+    font-size:18px;
+}
+
+/* username section */
+.user-section{
+    padding:10px;
+    border-bottom:1px solid #eee;
+}
+
+.user-section input{
+    width:100%;
+    padding:8px;
+    border-radius:5px;
+    border:1px solid #ccc;
+}
+
+/* messages */
+.chat-messages{
+    flex:1;
+    padding:15px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+}
+
+/* bubbles */
+.message{
+    max-width:70%;
+    padding:10px 14px;
+    margin-bottom:10px;
+    border-radius:8px;
+    font-size:14px;
+}
+
+.sent{
+    align-self:flex-end;
+    background:#DCF8C6;
+}
+
+.received{
+    align-self:flex-start;
+    background:#ffffff;
+    border:1px solid #ddd;
+}
+
+/* bottom input */
+.chat-input{
+    display:flex;
+    padding:10px;
+    border-top:1px solid #ddd;
+}
+
+.chat-input input{
+    flex:1;
+    padding:10px;
+    border-radius:20px;
+    border:1px solid #ccc;
+}
+
+.chat-input button{
+    margin-left:10px;
+    padding:10px 16px;
+    border:none;
+    border-radius:20px;
+    background:#25D366;
+    color:white;
+    cursor:pointer;
+}
+
+.chat-input button:hover{
+    background:#1ebe5d;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="chat-container">
+
+<div class="chat-header">
+💬 SignalR Chat
+</div>
+
+<div class="user-section">
+<input id="userInput" placeholder="Enter your name">
+</div>
+
+<div id="messagesList" class="chat-messages"></div>
+
+<div class="chat-input">
+<input id="messageInput" placeholder="Type a message">
+<button onclick="sendMessage()">Send</button>
+</div>
+
+</div>
+
+<script>
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/chatHub")
+    .build();
+
+connection.on("ReceiveMessage", (user, message) => {
+
+    const msg = document.createElement("div");
+
+    const currentUser = document.getElementById("userInput").value;
+
+    msg.classList.add("message");
+
+    if(user === currentUser){
+        msg.classList.add("sent");
+    }else{
+        msg.classList.add("received");
+    }
+
+    msg.textContent = message;
+
+    document.getElementById("messagesList").appendChild(msg);
+
+    msg.scrollIntoView();
+});
+
+connection.start();
+
+document.getElementById("messageInput")
+.addEventListener("keypress", function(event){
+
+    if(event.key === "Enter"){
+        event.preventDefault();
+        sendMessage();
+    }
+
+});
+
+function sendMessage(){
+
+    const user = document.getElementById("userInput").value;
+    const message = document.getElementById("messageInput").value;
+
+    if(message === "")
+        return
+
+    connection.invoke("SendMessage", user, message);
+
+    document.getElementById("messageInput").value="";
+}
+
+</script>
+
+</body>
+</html>
